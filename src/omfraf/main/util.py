@@ -23,8 +23,10 @@ class FinderError(Exception):
 
 
 def get_fragments(data):
+  logger.debug("Looking for: %s" % data)
+  
   p = Popen(
-    "%s" % (FRAGMENTFINDER),
+    "%s \'%s\'" % (FRAGMENTFINDER, data),
     shell=True,
     stdout=PIPE,
     stderr=PIPE
@@ -37,8 +39,8 @@ def get_fragments(data):
   logger.debug("FF: %s" % out[:-1])
   try:
     fragments = json.loads(out)
-  except ValidationError as e:
-    raise FinderError("Fragment Finder returned invalid data (%s)" % e)
+  except ValueError as e:
+    raise FinderError("Fragment Finder returned invalid data: (%s)" % e)
   
   if not 'fragments' in fragments:
     if 'error' in fragments:
@@ -58,9 +60,9 @@ def get_charges(args):
   # This is safe now, as all have been validated
   data = args.get("data")
 
-  cachedCharges = cache.get(data)
-  if cachedCharges:
-    return cachedCharges
+#   cachedCharges = cache.get(data)
+#   if cachedCharges:
+#     return cachedCharges
 
   try:
     charges = get_fragments(data)
