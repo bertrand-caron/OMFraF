@@ -1,21 +1,30 @@
+from copy import copy
 import json
 from random import random, randint
 import sys
 
 
 class Fragment:
-  def __init__(self, main_id, molecule):
-    self.atoms = [Atom(main_id)]
+  def __init__(self, main_ids, molecule):
+    self.atoms = []
+    atom_ids = copy(main_ids)
+    candidates = filter((lambda a: a['element'] != "H"), molecule['atoms'])
+    candidate_ids = map((lambda a: a['id']), candidates)
 
-    max = randint(1, 5)
-    for bond in molecule['bonds']:
-      if bond['atom1'] == main_id:
-        self.atoms.append(Atom(bond['atom2']))
-      elif bond['atom2'] == main_id:
-        self.atoms.append(Atom(bond['atom1']))
-      
-      if len(self.atoms) == max:
-        break
+    for main_id in main_ids:
+      self.atoms.append(Atom(main_id))
+      cis = list(set(candidate_ids) - set(atom_ids))
+      max = randint(1, 5)
+      for bond in molecule['bonds']:
+        if bond['atom1'] == main_id and bond['atom2'] in cis:
+          self.atoms.append(Atom(bond['atom2']))
+          atom_ids.append(bond['atom2'])
+        elif bond['atom2'] == main_id and bond['atom1'] in cis:
+          self.atoms.append(Atom(bond['atom1']))
+          atom_ids.append(bond['atom1'])
+
+        if len(self.atoms) == max:
+          break
 
   @property
   def __dict__(self):
@@ -49,7 +58,7 @@ if __name__ == "__main__":
     data = json.loads(sys.argv[1])
     fragments = []
     for i in range(randint(0, 10)):
-      fragments.append(Fragment(data['needle'][0], data['molecule']))
+      fragments.append(Fragment(data['needle'], data['molecule']))
     result = {'fragments': fragments}
     print json.dumps(result, default=lambda o: o.__dict__)
   except:
