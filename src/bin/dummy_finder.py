@@ -16,18 +16,18 @@ class Fragment:
       cis = list(set(candidate_ids) - set(atom_ids))
       max = randint(1, 5)
       for bond in molecule['bonds']:
-        if bond['atom1'] == main_id and bond['atom2'] in cis:
-          atom = Atom(bond['atom2'])
+        if bond['a1'] == main_id and bond['a2'] in cis:
+          atom = Atom(bond['a2'])
           self.atoms.append(atom)
-          atom_ids.append(bond['atom2'])
+          atom_ids.append(bond['a2'])
 
           bhs = atom.get_bonded_hydrogen(molecule)
           self.atoms.extend(bhs)
           atom_ids.extend(map(lambda a: a.id, bhs))
-        elif bond['atom2'] == main_id and bond['atom1'] in cis:
-          atom = Atom(bond['atom1'])
+        elif bond['a2'] == main_id and bond['a1'] in cis:
+          atom = Atom(bond['a1'])
           self.atoms.append(atom)
-          atom_ids.append(bond['atom1'])
+          atom_ids.append(bond['a1'])
 
           bhs = atom.get_bonded_hydrogen(molecule)
           self.atoms.extend(bhs)
@@ -56,8 +56,8 @@ class Atom:
     hids = map((lambda a: a['id']), hs)
     bhs = []
     for bond in molecule['bonds']:
-      if bond['atom1'] == self.id and bond['atom2'] in hids:
-        bhs.append(Atom(bond['atom2'], 0))
+      if bond['a1'] == self.id and bond['a2'] in hids:
+        bhs.append(Atom(bond['a2'], 0))
     return bhs
 
   @property

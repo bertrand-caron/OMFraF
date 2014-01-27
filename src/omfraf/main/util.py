@@ -49,16 +49,8 @@ def get_fragments(data):
       e = "KeyError: 'fragments'"
     raise FinderError("Fragment Finder could not find fragments (%s)" % e)
 
-  return {'fragments': add_bonds(fragments['fragments'], json.loads(data))}
-
-def add_bonds(fragments, data):
-  for fragment in fragments:
-    fas = map((lambda a: a['id']), fragment['atoms'])
-    fragment['bonds'] = []
-    for bond in data['molecule']['bonds']:
-      if bond['atom1'] in fas and bond['atom2'] in fas:
-        fragment['bonds'].append(bond)
   return fragments
+
 
 def get_charges(args):
   try:
