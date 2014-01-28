@@ -9,7 +9,7 @@ import re
 
 logger = logging.getLogger('omfraf')
 
-BINDIR = os.path.normpath("%s/../../bin/" % os.path.dirname(omfraf.__file__))
+BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 FRAGMENTGENERATOR = "python dummy_generator.py"
 FRAGMENTFINDER = "python dummy_finder.py"
 
