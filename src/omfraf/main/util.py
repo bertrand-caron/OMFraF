@@ -1,6 +1,7 @@
 from django.core.cache import cache
 import json
 import logging
+import omfraf
 import os
 from subprocess import Popen, PIPE
 import re
@@ -8,13 +9,9 @@ import re
 
 logger = logging.getLogger('omfraf')
 
-# TODO
-if os.name == 'nt':
-  FRAGMENTGENERATOR = "python bin/dummy_generator.py"
-  FRAGMENTFINDER = "python bin/dummy_finder.py"
-else:
-  FRAGMENTGENERATOR = "python bin/dummy_generator.py"
-  FRAGMENTFINDER = "python bin/dummy_finder.py"
+BINDIR = os.path.normpath("%s/../../bin/" % os.path.dirname(omfraf.__file__))
+FRAGMENTGENERATOR = "python dummy_generator.py"
+FRAGMENTFINDER = "python dummy_finder.py"
 
 
 class ValidationError(Exception):
@@ -69,6 +66,7 @@ def store_fragments(data):
 
   p = Popen(
     "%s \'%s\'" % (FRAGMENTGENERATOR, data),
+    cwd=BINDIR,
     shell=True,
     stdout=PIPE,
     stderr=PIPE
@@ -112,6 +110,7 @@ def get_fragments(data):
   
   p = Popen(
     "%s \'%s\'" % (FRAGMENTFINDER, data),
+    cwd=BINDIR,
     shell=True,
     stdout=PIPE,
     stderr=PIPE

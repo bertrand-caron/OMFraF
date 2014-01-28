@@ -117,11 +117,14 @@ if __name__ == "__main__":
       molecules.append(Molecule("5276", data['molecule']))
 
     ffid = datetime.now().strftime("%Y%m%d%H%M%S%f")
-    while exists("bin/fragments/%s.off" % ffid):
+    while exists("fragments/%s.off" % ffid):
       ffid -= 1
 
-    with open("bin/fragments/%s.off" % ffid, "w") as fp:
+    with open("fragments/%s.off" % ffid, "w") as fp:
       fp.write(json.dumps({'molecules': molecules}, default=lambda o: o.__dict__))
+
+    from time import sleep
+    sleep(3)
 
     result = {'ffid': ffid}
     print json.dumps(result, default=lambda o: o.__dict__)
