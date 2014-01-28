@@ -123,9 +123,6 @@ if __name__ == "__main__":
     with open("fragments/%s.off" % ffid, "w") as fp:
       fp.write(json.dumps({'molecules': molecules}, default=lambda o: o.__dict__))
 
-    from time import sleep
-    sleep(3)
-
     result = {'ffid': ffid}
     print json.dumps(result, default=lambda o: o.__dict__)
   except Exception as e:
