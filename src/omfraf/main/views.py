@@ -3,23 +3,11 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from omfraf.main import settings
-from util import get_charges, generate_fragments
+from util import generate_fragments, load_fragments
 
-@csrf_exempt
+
 def index(request):
-  if request.method != 'POST':
-    raise Http404
-
-  params = request.POST.dict()
-  if 'csrfmiddlewaretoken' in params:
-    params.pop('csrfmiddlewaretoken')
-
-  charges = get_charges(params)
-  charges.update({'version': settings.VERSION})
-  return HttpResponse(
-    simplejson.dumps(charges, indent=2, default=(lambda o: o.__dict__)),
-    mimetype="application/json"
-  )
+  return render(request, 'index.html')
 
 @csrf_exempt
 def generate(request):
@@ -37,5 +25,18 @@ def generate(request):
     mimetype="application/json"
   )
 
-def test(request):
-  return render(request, 'test.html')
+@csrf_exempt
+def load(request):
+  if request.method != 'POST':
+    raise Http404
+
+  params = request.POST.dict()
+  if 'csrfmiddlewaretoken' in params:
+    params.pop('csrfmiddlewaretoken')
+
+  fragments = load_fragments(params)
+  fragments.update({'version': settings.VERSION})
+  return HttpResponse(
+    simplejson.dumps(fragments, indent=2, default=(lambda o: o.__dict__)),
+    mimetype="application/json"
+  )

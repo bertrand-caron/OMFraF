@@ -11,7 +11,7 @@ logger = logging.getLogger('omfraf')
 
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 FRAGMENTGENERATOR = "python dummy_generator.py"
-FRAGMENTFINDER = "python dummy_finder.py"
+FRAGMENTFINDER = "python fragment_finder.py"
 
 
 class ValidationError(Exception):
@@ -26,7 +26,7 @@ class FinderError(Exception):
 
 def generate_fragments(args):
   try:
-    validate_generate_args(args)
+    validate_args(args)
   except ValidationError as e:
     return {'error': e.message}
 
@@ -81,7 +81,7 @@ def store_fragments(data):
     ack = json.loads(out)
   except ValueError as e:
     raise GeneratorError("Fragment Generator returned invalid data: (%s)" % e)
-  
+
   if not 'ffid' in ack:
     if 'error' in ack:
       e = ack['error']
@@ -91,23 +91,27 @@ def store_fragments(data):
 
   return ack
 
-def validate_generate_args(args):
-  data = args.get("data")
-  
-  if not data:
-    raise ValidationError("Missing molecule data")
-  
+
+def load_fragments(args):
   try:
-    _ = json.loads(data)
-  except ValueError as e:
-    raise ValidationError("Molecule data not in JSON format (%s)" % e)
-  
-  return True
+    validate_args(args)
+  except ValidationError as e:
+    return {'error': e.message}
+
+  # This is safe now, as all have been validated
+  data = args.get("data")
+
+  try:
+    fragments = get_fragments(data)
+  except FinderError as e:
+    return {'error': e.message}
+
+  return fragments
 
 
 def get_fragments(data):
   logger.debug("Looking for: %s" % data)
-  
+
   p = Popen(
     "%s \'%s\'" % (FRAGMENTFINDER, data),
     cwd=BINDIR,
@@ -115,7 +119,7 @@ def get_fragments(data):
     stdout=PIPE,
     stderr=PIPE
   )
-  
+
   out, err = p.communicate()
   if len(err) > 0:
     raise FinderError(err)
@@ -125,7 +129,7 @@ def get_fragments(data):
     fragments = json.loads(out)
   except ValueError as e:
     raise FinderError("Fragment Finder returned invalid data: (%s)" % e)
-  
+
   if not 'fragments' in fragments:
     if 'error' in fragments:
       e = fragments['error']
@@ -136,37 +140,15 @@ def get_fragments(data):
   return fragments
 
 
-def get_charges(args):
-  try:
-    validate_args(args)
-  except ValidationError as e:
-    return {'error': e.message}
-
-  # This is safe now, as all have been validated
-  data = args.get("data")
-
-#   cachedCharges = cache.get(data)
-#   if cachedCharges:
-#     return cachedCharges
-
-  try:
-    charges = get_fragments(data)
-  except FinderError as e:
-    return {'error': e.message}
-
-  # Cache for a year (infinitely enough..)
-  # cache.set(data, pos, 60 * 60 * 24 * 365)
-  return charges
-
 def validate_args(args):
   data = args.get("data")
-  
+
   if not data:
-    raise ValidationError("Missing molecule data")
-  
+    raise ValidationError("Missing query data")
+
   try:
     _ = json.loads(data)
   except ValueError as e:
-    raise ValidationError("Molecule data not in JSON format (%s)" % e)
-  
+    raise ValidationError("Query data not in JSON format (%s)" % e)
+
   return True

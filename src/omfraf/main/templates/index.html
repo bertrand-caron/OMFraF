@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OAPoC - Online Atom Position Calulator</title>
+  </head>
+
+  <body>
+    <h1>OMFraF</h1>
+    <h2>Online Molecule Fragment Finder</h2>
+
+    <hr />
+
+    <h3>Generate fragments</h3>
+
+    <form action="generate/" method="post">
+      {% csrf_token %}
+      <textarea rows="10" cols="50" name="data" placeholder="JSON generation query"></textarea>
+      <br />
+      <input type="submit" />
+    </form>
+
+    <hr />
+
+    <h3>Retrieve fragments</h3>
+
+    <form action="load/" method="post">
+      {% csrf_token %}
+      <textarea rows="10" cols="50" name="data" placeholder="JSON retrieval query"></textarea>
+      <br />
+      <input type="submit" />
+    </form>
+
+    <hr />
+  </body>
+</html>

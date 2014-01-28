@@ -16,5 +16,5 @@ urlpatterns = patterns('omfraf.main.views',
     # url(r'^admin/', include(admin.site.urls)),
     url(r'^$', 'index', name='index'),
     url(r'^generate/$', 'generate', name='generate'),
-    url(r'^test/', 'test', name='test'),
+    url(r'^load/$', 'load', name='load'),
 )

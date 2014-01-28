@@ -1,0 +1,111 @@
+import json
+import os
+import sys
+
+
+FRAGMENTDIR = "fragments/"
+
+
+class ValidationError(Exception):
+  pass
+
+class LoadError(Exception):
+  pass
+
+
+class Fragment:
+  def __init__(self, atb_id):
+    self.atb_id = atb_id
+    self.atoms = []
+
+  def add_atom(self, id, charge, other_id):
+    self.atoms.append(Atom(id, charge, other_id))
+
+  @property
+  def __dict__(self):
+    return {
+      'atb_id': self.atb_id,
+      'atoms': map(lambda a: a.__dict__, self.atoms)
+    }
+
+
+class Atom:
+  def __init__(self, id, charge, other_id):
+    self.id = id
+    self.charge = charge
+    self.other_id = other_id
+
+  @property
+  def __dict__(self):
+    return {
+      'id': self.id,
+      'charge': self.charge,
+      'other_id': self.other_id
+    }
+
+
+def load_off(ffid):
+  off_name = "%s%s.off" % (FRAGMENTDIR, ffid)
+  if not os.path.exists(off_name):
+    raise LoadError("Could not find fragment file %s.off" % ffid)
+
+  with open(off_name, 'r') as fp:
+    data = fp.read()
+
+  try:
+    return json.loads(data)
+  except ValueError as e:
+    raise LoadError("Invalid fragment file: %s" % e)
+
+def get_fragments(ffid, needle):
+  off = load_off(ffid)
+  fragments = []
+  for molecule in off["molecules"]:
+    for fragment in molecule["fragments"]:
+      aids = map(lambda p: p["id1"], fragment["pairs"])
+      match = True
+      for aid in needle:
+        if not aid in aids:
+          match = False
+          break
+      if match:
+        frag = Fragment(molecule["atb_id"])
+        for pair in fragment["pairs"]:
+          frag.add_atom(pair["id1"], pair["charge"], pair["id2"])
+        fragments.append(frag)
+  return fragments
+
+def find_fragments(args):
+  try:
+    data = json.loads(args)
+  except ValueError as e:
+    return {'error': "Query not in JSON format: %s" % e}
+
+  try:
+    validate_query(data)
+  except ValidationError as e:
+    return {'error': "Invalid query: %s" % e}
+
+  # This is safe now, as all has been validated
+  ffid = data["ffid"]
+  needle = data["needle"]
+
+  try:
+    fragments = get_fragments(ffid, needle)
+  except LoadError as e:
+    return {'error': "Could not load fragments: %s" % e}
+
+  return {'fragments': fragments}
+
+def validate_query(data):
+  if not 'ffid' in data or len(data['ffid']) == 0:
+    raise ValidationError("FFID not set")
+  elif '.' in data['ffid']:
+    raise ValidationError("Invalid FFID")
+  elif not 'needle' in data or len(data['needle']) == 0:
+    raise ValidationError("Needle not set")
+
+
+if __name__ == "__main__":
+  result = find_fragments(sys.argv[1])
+  print json.dumps(result, default=lambda o: o.__dict__)
