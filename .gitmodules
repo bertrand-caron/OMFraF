@@ -1,0 +1,3 @@
+[submodule "src/bin/mop"]
+	path = src/bin/mop
+	url = git@github.com:melkebir/mop.git
