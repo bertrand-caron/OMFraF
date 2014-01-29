@@ -44,10 +44,9 @@ class Atom:
     }
 
 
-def load_off(ffid):
-  off_name = "%s%s.off" % (FRAGMENTDIR, ffid)
+def load_off(off_name):
   if not os.path.exists(off_name):
-    raise LoadError("Could not find fragment file %s.off" % ffid)
+    raise LoadError("Could not find fragment file %s" % off_name)
 
   with open(off_name, 'r') as fp:
     data = fp.read()
@@ -57,11 +56,14 @@ def load_off(ffid):
   except ValueError as e:
     raise LoadError("Invalid fragment file: %s" % e)
 
-def get_fragments(ffid, needle):
-  off = load_off(ffid)
+def get_fragments(off_name, needle):
+  off = load_off(off_name)
   fragments = []
   for molecule in off["molecules"]:
     for fragment in molecule["fragments"]:
+      if not "pairs" in fragment:
+        continue
+
       aids = map(lambda p: p["id1"], fragment["pairs"])
       match = True
       for aid in needle:
@@ -87,21 +89,19 @@ def find_fragments(args):
     return {'error': "Invalid query: %s" % e}
 
   # This is safe now, as all has been validated
-  ffid = data["ffid"]
+  off_name = data["off"]
   needle = data["needle"]
 
   try:
-    fragments = get_fragments(ffid, needle)
+    fragments = get_fragments(off_name, needle)
   except LoadError as e:
     return {'error': "Could not load fragments: %s" % e}
 
   return {'fragments': fragments}
 
 def validate_query(data):
-  if not 'ffid' in data or len(data['ffid']) == 0:
+  if not 'off' in data or len(data['off']) == 0:
     raise ValidationError("FFID not set")
-  elif '.' in data['ffid']:
-    raise ValidationError("Invalid FFID")
   elif not 'needle' in data or len(data['needle']) == 0:
     raise ValidationError("Needle not set")
 
