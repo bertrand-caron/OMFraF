@@ -35,7 +35,7 @@ def bonds_to_lgf(bonds):
   lgf = "@edges\n"
   lgf += "\t\tlabel\n"
   for i, bond in enumerate(bonds):
-    lgf += "%s\t%s\t%s\t\n" % (i + 1, bond["a1"], bond["a2"])
+    lgf += "%s\t%s\t%s\t\n" % (bond["a1"], bond["a2"], i)
   return lgf
 
 
@@ -74,8 +74,7 @@ def generate_molecule_fragments(molid, molfile, shell, infile):
     raise ValidationError(err)
 
   try:
-    # Broken! return json.loads(out)
-    return out
+    return json.loads(out)
   except ValueError as e:
     raise ValidationError("Generator returned invalid JSON: %s" % e)
 
