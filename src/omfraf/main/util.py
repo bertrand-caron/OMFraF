@@ -23,6 +23,135 @@ class GeneratorError(Exception):
 class FinderError(Exception):
   pass
 
+class UnknownElementError(Exception):
+  pass
+
+class Molecule:
+  def __init__(self):
+    self.atoms = []
+    self.bonds = []
+
+  def get_atom(self, id):
+    for atom in self.atoms:
+      if atom.id == id:
+        return atom
+
+  def get_atom_bonds(self, atom, type=None):
+    if type == None:
+      bonds = self.bonds
+    else:
+      bonds = filter(lambda b: b.type == type, self.bonds)
+    return filter(lambda b: b.a1 == atom or b.a2 == atom, bonds)
+
+  def parse(self, data):
+    for atom in data["atoms"]:
+      self.atoms.append(Atom(self, atom["id"], atom["element"]))
+
+    for bond in data["bonds"]:
+      a1 = self.get_atom(bond["a1"])
+      a2 = self.get_atom(bond["a2"])
+      self.bonds.append(Bond(self, a1, a2, bond["bondType"]))
+
+    return self
+
+  @property
+  def __json__(self):
+    return {
+      "atoms": map(lambda a: a.__json__, self.atoms),
+      "bonds": map(lambda b: b.__json__, self.bonds)
+    }
+
+class Atom:
+  def __init__(self, molecule, id, element):
+    self.molecule = molecule
+    self.id = id
+    self.element = element
+
+  @property
+  def type(self):
+    bas = self.get_bonded_atoms()
+    if self.element == 'C':
+      bhs = filter(lambda a: a.element == 'H', bas)
+      if len(bhs) == 0:
+        return 13
+      else:
+        return 12
+    elif self.element == 'H':
+      if bas and bas[0].element == 'C':
+        return 20
+      else:
+        return 21
+    elif self.element == 'O':
+      if len(filter(lambda a: a.element == 'C', bas)) == len(bas) and \
+          len(bas) > 1:
+        return 4
+      elif len(bas) > 1:
+        return 3
+      elif bas and len(filter(lambda a: a.element == 'O', \
+          bas[0].get_bonded_atoms(2))) > 1:
+        return 2
+      else:
+        return 1
+    elif self.element == 'N':
+      if len(bas) > 3:
+        return 8
+      elif len(bas) == 1:
+        return 9
+      elif len(self.get_bonded_atoms(5)) > 1:
+        return 9
+      elif len(filter(lambda a: a.element == 'H', bas)) < 2:
+        return 6
+      else:
+        return 7
+    elif self.element == 'S':
+      if len(bas) > 2:
+        return 42
+      else:
+        return 23
+    elif self.element == 'P':
+      return 30
+    elif self.element == 'Si':
+      return 31
+    elif self.element == 'F':
+      return 32
+    elif self.element == 'Cl':
+      return 33
+    elif self.element == 'Br':
+      return 34
+
+    raise UnknownElementError("Encountered element of type %s" % self.element)
+
+  def get_bonded_atoms(self, type=None):
+    return map(
+      lambda b: b.a2 if b.a1 == self else b.a1,
+      self.molecule.get_atom_bonds(self, type)
+    )
+
+  @property
+  def __json__(self):
+    return {
+      "id": self.id,
+      "type": self.type
+    }
+
+class Bond:
+  def __init__(self, molecule, a1, a2, type):
+    self.molecule = molecule
+    self.a1 = a1
+    self.a2 = a2
+    self.type = type
+
+  @property
+  def is_aromatic(self):
+    return self.type == 5
+
+  @property
+  def __json__(self):
+    return {
+      "a1": self.a1.id,
+      "a2": self.a2.id
+    }
+
 
 def generate_fragments(args):
   try:
@@ -41,27 +170,16 @@ def generate_fragments(args):
   return ack
 
 def fix_element_types(data):
-  # TODO: replace with proper version from ATB guys
   jd = json.loads(data)
-  for atom in jd["molecule"]["atoms"]:
-    e = atom["element"]
-    del atom["element"]
-    if e == "C":
-      atom["type"] = 12
-    elif e == "H":
-      atom["type"] = 20
-    elif e == "N":
-      atom["type"] = 8
-    elif e == "O":
-      atom["type"] = 2
-    elif e == "P":
-      atom["type"] = 30
-    else:
-      atom["type"] = 0
+  jd["molecule"] = Molecule().parse(jd["molecule"]).__json__
   return json.dumps(jd)
 
 def store_fragments(data):
-  data = fix_element_types(data)
+  try:
+    data = fix_element_types(data)
+  except UnknownElementError as e:
+    raise GeneratorError("Could not resolve all element types: %s" % e)
+
   logger.debug("Storing fragments for: %s" % data)
 
   p = Popen(
@@ -80,14 +198,14 @@ def store_fragments(data):
   try:
     ack = json.loads(out)
   except ValueError as e:
-    raise GeneratorError("Fragment Generator returned invalid data: (%s)" % e)
+    raise GeneratorError("Generator returned invalid data: (%s)" % e)
 
   if not 'ffid' in ack:
     if 'error' in ack:
       e = ack['error']
     else:
       e = "KeyError: 'ffid'"
-    raise GeneratorError("Fragment Generator could not store fragments (%s)" % e)
+    raise GeneratorError("Generator could not store fragments (%s)" % e)
 
   return ack
 
