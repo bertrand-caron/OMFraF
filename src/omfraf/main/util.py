@@ -10,7 +10,7 @@ import re
 logger = logging.getLogger('omfraf')
 
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
-FRAGMENTGENERATOR = "python dummy_generator.py"
+FRAGMENTGENERATOR = "python fragment_generator.py"
 FRAGMENTFINDER = "python fragment_finder.py"
 
 
@@ -200,11 +200,11 @@ def store_fragments(data):
   except ValueError as e:
     raise GeneratorError("Generator returned invalid data: (%s)" % e)
 
-  if not 'ffid' in ack:
+  if not 'off' in ack:
     if 'error' in ack:
       e = ack['error']
     else:
-      e = "KeyError: 'ffid'"
+      e = "KeyError: 'off'"
     raise GeneratorError("Generator could not store fragments (%s)" % e)
 
   return ack
