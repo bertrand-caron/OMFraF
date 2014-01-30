@@ -101,7 +101,7 @@ def find_fragments(args):
 
 def validate_query(data):
   if not 'off' in data or len(data['off']) == 0:
-    raise ValidationError("FFID not set")
+    raise ValidationError("OFF not set")
   elif not 'needle' in data or len(data['needle']) == 0:
     raise ValidationError("Needle not set")
 
