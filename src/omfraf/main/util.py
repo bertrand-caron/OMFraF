@@ -72,7 +72,7 @@ class Atom:
     bas = self.get_bonded_atoms()
     if self.element == 'C':
       bhs = filter(lambda a: a.element == 'H', bas)
-      if len(bhs) == 0:
+      if len(bas) == 4 and len(bhs) == 0:
         return 13
       else:
         return 12
@@ -194,7 +194,7 @@ def store_fragments(data):
   if len(err) > 0:
     raise GeneratorError(err)
 
-  logger.debug("FG: %s" % out[:-1])
+  #logger.debug("FG: %s" % out[:-1])
   try:
     ack = json.loads(out)
   except ValueError as e:
@@ -242,7 +242,7 @@ def get_fragments(data):
   if len(err) > 0:
     raise FinderError(err)
 
-  logger.debug("FF: %s" % out[:-1])
+  #logger.debug("FF: %s" % out[:-1])
   try:
     fragments = json.loads(out)
   except ValueError as e:
