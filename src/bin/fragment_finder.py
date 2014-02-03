@@ -14,8 +14,9 @@ class LoadError(Exception):
 
 
 class Fragment:
-  def __init__(self, atb_id):
+  def __init__(self, atb_id, score):
     self.atb_id = atb_id
+    self.score = score
     self.atoms = []
 
   def add_atom(self, id, charge, other_id):
@@ -25,6 +26,7 @@ class Fragment:
   def __dict__(self):
     return {
       'atb_id': self.atb_id,
+      'score': self.score,
       'atoms': map(lambda a: a.__dict__, self.atoms)
     }
 
@@ -71,11 +73,11 @@ def get_fragments(off_name, needle):
           match = False
           break
       if match:
-        frag = Fragment(molecule["atb_id"])
+        frag = Fragment(molecule["atb_id"], fragment["score"])
         for pair in fragment["pairs"]:
           frag.add_atom(pair["id1"], pair["charge"], pair["id2"])
         fragments.append(frag)
-  return fragments
+  return sorted(fragments, key=(lambda f: f.score), reverse=True)
 
 def find_fragments(args):
   try:
@@ -94,7 +96,7 @@ def find_fragments(args):
 
   try:
     fragments = get_fragments(off_name, needle)
-  except LoadError as e:
+  except Exception as e:
     return {'error': "Could not load fragments: %s" % e}
 
   return {'fragments': fragments}
