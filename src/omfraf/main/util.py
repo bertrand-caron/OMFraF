@@ -88,7 +88,7 @@ class Atom:
       elif len(bas) > 1:
         return 3
       elif bas and len(filter(lambda a: a.element == 'O', \
-          bas[0].get_bonded_atoms(2))) > 1:
+          bas[0].get_bonded_atoms())) > 1:
         return 2
       else:
         return 1
@@ -198,6 +198,7 @@ def store_fragments(data):
   try:
     ack = json.loads(out)
   except ValueError as e:
+    logger.info(out)
     raise GeneratorError("Generator returned invalid data: (%s)" % e)
 
   if not 'off' in ack:
