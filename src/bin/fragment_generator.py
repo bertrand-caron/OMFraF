@@ -8,6 +8,7 @@ import sys
 from tempfile import NamedTemporaryFile
 
 
+SAVEDIR = "fragments/"
 GENERATOR = "mop/build/fragments"
 DEFAULT_REPO = "mop/data/fragments/lipids/"
 DEFAULT_SHELL_SIZE = 1
@@ -54,8 +55,9 @@ def generate_fragments(lgf, repo, shell, outfile):
           )
         )
 
-  res = json.dumps({"molecules": molecules}, default=(lambda o: o.__dict__))
-  with open(outfile, "w") as fp:
+  res = json.dumps({"molecules": molecules, "lgf": lgf}, default=(lambda o: o.__dict__))
+  outpath = os.path.normpath("%s/%s" % (SAVEDIR, outfile))
+  with open(outpath, "w") as fp:
     fp.write(res)
 
   return {'off': outfile}
@@ -84,9 +86,9 @@ def main(argv):
   shell = DEFAULT_SHELL_SIZE
 
   ffid = datetime.now().strftime("%Y%m%d%H%M%S%f")
-  while os.path.exists("fragments/%s.off" % ffid):
+  while os.path.exists("%s/%s.off" % (SAVEDIR, ffid)):
     ffid = str(int(ffid) - 1)
-  outfile = "fragments/%s.off" % ffid
+  outfile = "%s.off" % ffid
 
   try:
     opts, args = getopt(
@@ -112,10 +114,10 @@ def main(argv):
       except ValueError as e:
         raise ValidationError("Shell size needs to be an integer")
     elif o in ("-o", "--ofile"):
-      op = os.path.normpath(v)
+      op = os.path.normpath("%s/%s" % (SAVEDIR, v))
       dir, _ = os.path.split(op)
       if os.path.exists(dir):
-        outfile = op
+        outfile = v
       else:
         raise ValidationError("Output folder does not exist")
 

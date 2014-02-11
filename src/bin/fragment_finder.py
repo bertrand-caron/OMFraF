@@ -47,10 +47,11 @@ class Atom:
 
 
 def load_off(off_name):
-  if not os.path.exists(off_name):
-    raise LoadError("Could not find fragment file %s" % off_name)
+  off = os.path.normpath("%s/%s" % (FRAGMENTDIR, off_name))
+  if not os.path.exists(off):
+    raise LoadError("Could not find fragment file %s" % off)
 
-  with open(off_name, 'r') as fp:
+  with open(off, 'r') as fp:
     data = fp.read()
 
   try:

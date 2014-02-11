@@ -10,6 +10,7 @@ import re
 logger = logging.getLogger('omfraf')
 
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
+FRAGMENTSDIR = "%s/fragments" % BINDIR
 FRAGMENTGENERATOR = "python fragment_generator.py"
 FRAGMENTFINDER = "python fragment_finder.py"
 
@@ -30,6 +31,7 @@ class Molecule:
   def __init__(self):
     self.atoms = []
     self.bonds = []
+    self.molid = None
 
   def get_atom(self, id):
     for atom in self.atoms:
@@ -52,14 +54,20 @@ class Molecule:
       a2 = self.get_atom(bond["a2"])
       self.bonds.append(Bond(self, a1, a2, bond["bondType"]))
 
+    if "molid" in data and data["molid"].isdigit():
+      self.molid = data["molid"]
+
     return self
 
   @property
   def __json__(self):
-    return {
+    data = {
       "atoms": map(lambda a: a.__json__, self.atoms),
       "bonds": map(lambda b: b.__json__, self.bonds)
     }
+    if self.molid:
+      data["molid"] = self.molid
+    return data
 
 class Atom:
   def __init__(self, molecule, id, element):
@@ -162,6 +170,12 @@ def generate_fragments(args):
   # This is safe now, as all have been validated
   data = args.get("data")
 
+  md = json.loads(data)["molecule"]
+  if "molid" in md and md["molid"].isdigit():
+    off = "%s/%s.off" % (FRAGMENTSDIR, md["molid"])
+    if os.path.isfile(off):
+      return {'off': "%s.off" % md["molid"]}
+
   try:
     ack = store_fragments(data)
   except GeneratorError as e:
@@ -182,8 +196,14 @@ def store_fragments(data):
 
   logger.debug("Storing fragments for: %s" % data)
 
+  md = json.loads(data)["molecule"]
+  if "molid" in md and md["molid"].isdigit():
+    args = "-o %s.off" % md["molid"]
+  else:
+    args = ""
+
   p = Popen(
-    "%s \'%s\'" % (FRAGMENTGENERATOR, data),
+    "%s %s \'%s\'" % (FRAGMENTGENERATOR, args, data),
     cwd=BINDIR,
     shell=True,
     stdout=PIPE,
