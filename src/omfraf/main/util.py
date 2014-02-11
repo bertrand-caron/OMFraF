@@ -170,6 +170,7 @@ def generate_fragments(args):
 
   # This is safe now, as all have been validated
   data = args.get("data")
+  shell_size = args.get("shell", None)
 
   md = json.loads(data)["molecule"]
   if "molid" in md and md["molid"].isdigit():
@@ -178,7 +179,7 @@ def generate_fragments(args):
       return {'off': "%s.off" % md["molid"]}
 
   try:
-    ack = store_fragments(data)
+    ack = store_fragments(data, shell_size)
   except GeneratorError as e:
     return {'error': e.message}
 
@@ -189,7 +190,7 @@ def fix_element_types(data):
   jd["molecule"] = Molecule().parse(jd["molecule"]).__json__
   return json.dumps(jd)
 
-def store_fragments(data):
+def store_fragments(data, shell_size=None):
   try:
     data = fix_element_types(data)
   except UnknownElementError as e:
@@ -202,6 +203,8 @@ def store_fragments(data):
     args = "-o %s.off" % md["molid"]
   else:
     args = ""
+  if shell_size:
+    args += "-s %s" % shell_size
 
   p = Popen(
     "%s %s \'%s\'" % (FRAGMENTGENERATOR, args, data),
