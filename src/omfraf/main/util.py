@@ -95,8 +95,9 @@ class Atom:
         return 4
       elif len(bas) > 1:
         return 3
-      elif bas and len(filter(lambda a: a.element == 'O', \
-          bas[0].get_bonded_atoms())) > 1 and bas != self.get_bonded_atoms(5):
+      elif bas and len(filter(lambda a: a.element == 'O' and \
+          len(a.get_bonded_atoms()) == 1, bas[0].get_bonded_atoms())) > 1 and \
+          bas != self.get_bonded_atoms(5):
         return 2
       else:
         return 1
