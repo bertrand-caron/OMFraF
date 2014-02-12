@@ -40,7 +40,7 @@ def bonds_to_lgf(bonds):
   return lgf
 
 
-def generate_fragments(lgf, repo, shell, outfile):
+def generate_fragments(lgf, repo, shell, outfile, atom_ids):
   molecules = []
   with NamedTemporaryFile() as fp:
     fp.write(lgf)
@@ -49,18 +49,28 @@ def generate_fragments(lgf, repo, shell, outfile):
     for file in os.listdir(repo):
       name, ext = os.path.splitext(file)
       if ext == ".lgf":
-        molecules.append(
-          generate_molecule_fragments(
-            name, "%s/%s" % (repo, file), shell, fp.name
-          )
+        mf = generate_molecule_fragments(
+          name, "%s/%s" % (repo, file), shell, fp.name
         )
+        if len(mf["fragments"]) > 0:
+          molecules.append(mf)
 
-  res = json.dumps({"molecules": molecules, "lgf": lgf}, default=(lambda o: o.__dict__))
+  found_ids = set()
+  for molecule in molecules:
+    for fragment in molecule["fragments"]:
+      for pair in fragment["pairs"]:
+        found_ids.add(pair["id1"])
+
+  missing_atoms = set(atom_ids) - found_ids
+  res = json.dumps({
+    "molecules": molecules,
+    "missing_atoms": list(missing_atoms)
+  }, default=(lambda o: o.__dict__))
   outpath = os.path.normpath("%s/%s" % (SAVEDIR, outfile))
   with open(outpath, "w") as fp:
     fp.write(res)
 
-  return {'off': outfile}
+  return {'off': outfile, 'missing_atoms': list(missing_atoms)}
 
 
 def generate_molecule_fragments(molid, molfile, shell, infile):
@@ -130,8 +140,9 @@ def main(argv):
     raise ValidationError("JSON query is invalid: %s" % e)
 
   lgf = molecule_to_lgf(jd["molecule"])
+  atom_ids = map(lambda a: a["id"], jd["molecule"]["atoms"])
 
-  out = generate_fragments(lgf, repo, shell, outfile)
+  out = generate_fragments(lgf, repo, shell, outfile, atom_ids)
   print json.dumps(out, default=lambda o: o.__dict__)
 
 
