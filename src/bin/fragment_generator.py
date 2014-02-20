@@ -10,7 +10,8 @@ from tempfile import NamedTemporaryFile
 
 SAVEDIR = "fragments/"
 GENERATOR = "mop/build/fragments"
-DEFAULT_REPO = "mop/data/fragments/lipids/"
+REPODIR = "mop/data/fragments/"
+DEFAULT_REPO = "lipids"
 DEFAULT_SHELL_SIZE = 1
 
 
@@ -41,16 +42,17 @@ def bonds_to_lgf(bonds):
 
 
 def generate_fragments(lgf, repo, shell, outfile, atom_ids):
+  repo_path = os.path.normpath("%s/%s" % (REPODIR, repo))
   molecules = []
   with NamedTemporaryFile() as fp:
     fp.write(lgf)
     fp.seek(0)
 
-    for file in os.listdir(repo):
+    for file in os.listdir(repo_path):
       name, ext = os.path.splitext(file)
       if ext == ".lgf":
         mf = generate_molecule_fragments(
-          name, "%s/%s" % (repo, file), shell, fp.name
+          name, "%s/%s" % (repo_path, file), shell, fp.name
         )
         if len(mf["fragments"]) > 0:
           molecules.append(mf)
@@ -112,7 +114,8 @@ def main(argv):
   for o, v in opts:
     if o in ("-r", "--repository"):
       rp = os.path.normpath(v)
-      if os.path.exists(rp):
+      repo_path = os.path.normpath("%s/%s" % (REPODIR, rp))
+      if os.path.exists(repo_path):
         repo = rp
       else:
         raise ValidationError("Provided repository does not exist")
