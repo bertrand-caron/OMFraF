@@ -56,7 +56,12 @@ def generate_fragments(args):
     outfile = get_atb_outfile(md["molid"], repo, shell_size)
     off = "%s/%s" % (FRAGMENTSDIR, outfile)
     if os.path.isfile(off):
-      return {'off': outfile}
+      with open(off, 'r') as fp:
+        try:
+          od = json.loads(fp.read())
+          return {'off': outfile, 'missing_atoms': od['missing_atoms']}
+        except ValueError as e:
+          pass
 
   try:
     ack = store_fragments(data, repo, shell_size)
