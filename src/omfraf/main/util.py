@@ -9,6 +9,8 @@ import re
 
 logger = logging.getLogger('omfraf')
 
+DEFAULTSHELL = 1
+DEFAULTREPO = "lipids"
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 REPODIR = os.path.normpath("%s/mop/data/fragments/" % BINDIR)
 FRAGMENTSDIR = "%s/fragments" % BINDIR
@@ -35,6 +37,9 @@ def get_repositories():
   return {'repos': repos}
 
 
+def get_atb_outfile(molid, repo=None, shell=None):
+  return "%s_%s_%s.off" % (repo or DEFAULTREPO, shell or DEFAULTSHELL, molid)
+
 def generate_fragments(args):
   try:
     validate_args(args)
@@ -48,9 +53,10 @@ def generate_fragments(args):
 
   md = json.loads(data)["molecule"]
   if "molid" in md and md["molid"].isdigit():
-    off = "%s/%s.off" % (FRAGMENTSDIR, md["molid"])
+    outfile = get_atb_outfile(md["molid"], repo, shell_size)
+    off = "%s/%s" % (FRAGMENTSDIR, outfile)
     if os.path.isfile(off):
-      return {'off': "%s.off" % md["molid"]}
+      return {'off': outfile}
 
   try:
     ack = store_fragments(data, repo, shell_size)
@@ -64,7 +70,7 @@ def store_fragments(data, repo=None, shell_size=None):
 
   md = json.loads(data)["molecule"]
   if "molid" in md and md["molid"].isdigit():
-    args = "-o %s.off" % md["molid"]
+    args = "-o %s" % get_atb_outfile(md["molid"], repo, shell_size)
   else:
     args = ""
   if repo:
