@@ -15,6 +15,7 @@ urlpatterns = patterns('omfraf.main.views',
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
     url(r'^$', 'index', name='index'),
+    url(r'^repos/$', 'repos', name='repos'),
     url(r'^generate/$', 'generate', name='generate'),
     url(r'^load/$', 'load', name='load'),
 )

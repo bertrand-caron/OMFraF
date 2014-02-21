@@ -10,6 +10,7 @@ import re
 logger = logging.getLogger('omfraf')
 
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
+REPODIR = os.path.normpath("%s/mop/data/fragments/" % BINDIR)
 FRAGMENTSDIR = "%s/fragments" % BINDIR
 FRAGMENTGENERATOR = "python fragment_generator.py"
 FRAGMENTFINDER = "python fragment_finder.py"
@@ -23,6 +24,15 @@ class GeneratorError(Exception):
 
 class FinderError(Exception):
   pass
+
+
+def get_repositories():
+  repos = []
+  for _, dirs, _ in os.walk(REPODIR):
+    repos = dirs
+    break
+
+  return {'repos': repos}
 
 
 def generate_fragments(args):

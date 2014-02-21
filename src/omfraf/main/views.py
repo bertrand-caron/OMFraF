@@ -3,11 +3,20 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from omfraf.main import settings
-from util import generate_fragments, load_fragments
+from util import get_repositories, generate_fragments, load_fragments
 
 
 def index(request):
   return render(request, 'index.html')
+
+@csrf_exempt
+def repos(request):
+  repos = get_repositories()
+  repos.update({'version': settings.VERSION})
+  return HttpResponse(
+    simplejson.dumps(repos, indent=2, default=(lambda o: o.__dict__)),
+    mimetype="application/json"
+  )
 
 @csrf_exempt
 def generate(request):
