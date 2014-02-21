@@ -118,7 +118,7 @@ def main(argv):
       if os.path.exists(repo_path):
         repo = rp
       else:
-        raise ValidationError("Provided repository does not exist")
+        raise ValidationError("Provided repository (%s) does not exist" % rp)
     elif o in ("-s", "--shell_size"):
       try:
         shell = int(v)

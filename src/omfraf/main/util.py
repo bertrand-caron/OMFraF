@@ -33,6 +33,7 @@ def generate_fragments(args):
 
   # This is safe now, as all have been validated
   data = args.get("data")
+  repo = args.get("repo", None)
   shell_size = args.get("shell", None)
 
   md = json.loads(data)["molecule"]
@@ -42,13 +43,13 @@ def generate_fragments(args):
       return {'off': "%s.off" % md["molid"]}
 
   try:
-    ack = store_fragments(data, shell_size)
+    ack = store_fragments(data, repo, shell_size)
   except GeneratorError as e:
     return {'error': e.message}
 
   return ack
 
-def store_fragments(data, shell_size=None):
+def store_fragments(data, repo=None, shell_size=None):
   logger.debug("Storing fragments for: %s" % data)
 
   md = json.loads(data)["molecule"]
@@ -56,8 +57,10 @@ def store_fragments(data, shell_size=None):
     args = "-o %s.off" % md["molid"]
   else:
     args = ""
+  if repo:
+    args += " -r %s" % repo
   if shell_size:
-    args += "-s %s" % shell_size
+    args += " -s %s" % shell_size
 
   p = Popen(
     "%s %s \'%s\'" % (FRAGMENTGENERATOR, args, data),
