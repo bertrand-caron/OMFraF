@@ -1,6 +1,7 @@
 import json as simplejson
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from omfraf.main import settings
 from util import get_repositories, generate_fragments, load_fragments, \
@@ -51,6 +52,7 @@ def load(request):
     mimetype="application/json"
   )
 
+@never_cache
 def update_mop(request):
   out = mop_update()
   return HttpResponse(out)
