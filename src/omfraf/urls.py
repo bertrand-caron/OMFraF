@@ -18,4 +18,5 @@ urlpatterns = patterns('omfraf.main.views',
     url(r'^repos/$', 'repos', name='repos'),
     url(r'^generate/$', 'generate', name='generate'),
     url(r'^load/$', 'load', name='load'),
+    url(r'^update_mop/$', 'update_mop', name='update_mop'),
 )

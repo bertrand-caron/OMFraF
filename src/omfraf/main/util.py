@@ -3,7 +3,7 @@ import json
 import logging
 import omfraf
 import os
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import re
 
 
@@ -14,6 +14,7 @@ DEFAULTREPO = "lipids"
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 REPODIR = os.path.normpath("%s/mop/data/fragments/" % BINDIR)
 FRAGMENTSDIR = "%s/fragments" % BINDIR
+MOPDIR = "%s/mop" % BINDIR
 FRAGMENTGENERATOR = "python fragment_generator.py"
 FRAGMENTFINDER = "python fragment_finder.py"
 
@@ -172,3 +173,30 @@ def validate_args(args):
     raise ValidationError("Query data not in JSON format (%s)" % e)
 
   return True
+
+
+def mop_update():
+  res = "Updating mop GIT repo...\n"
+  p = Popen(
+    "git pull",
+    cwd=MOPDIR,
+    shell=True,
+    stdout=PIPE,
+    stderr=STDOUT
+  )
+  out, _ = p.communicate()
+  res += out
+
+  res += "Removing stored fragment files...\n"
+  p = Popen(
+    "rm -vf *.off",
+    cwd=FRAGMENTSDIR,
+    shell=True,
+    stdout=PIPE,
+    stderr=STDOUT
+  )
+  out, _ = p.communicate()
+  res += out
+
+  res += "Done.\n"
+  return "<pre>\n" + res + "</pre>\n"

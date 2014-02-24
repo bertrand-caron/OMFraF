@@ -3,7 +3,8 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from omfraf.main import settings
-from util import get_repositories, generate_fragments, load_fragments
+from util import get_repositories, generate_fragments, load_fragments, \
+    mop_update
 
 
 def index(request):
@@ -49,3 +50,7 @@ def load(request):
     simplejson.dumps(fragments, indent=2, default=(lambda o: o.__dict__)),
     mimetype="application/json"
   )
+
+def update_mop(request):
+  out = mop_update()
+  return HttpResponse(out)
