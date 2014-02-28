@@ -15,6 +15,7 @@ BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 REPODIR = os.path.normpath("%s/mop/data/fragments/" % BINDIR)
 FRAGMENTSDIR = "%s/fragments" % BINDIR
 MOPDIR = "%s/mop" % BINDIR
+MOPBINDIR = "%s/build" % MOPDIR
 FRAGMENTGENERATOR = "python fragment_generator.py"
 FRAGMENTFINDER = "python fragment_finder.py"
 
@@ -187,6 +188,17 @@ def mop_update():
   out, _ = p.communicate()
   res += out
 
+  res += "Building fragment generator...\n"
+  p = Popen(
+    "make",
+    cwd=MOPBINDIR,
+    shell=True,
+    stdout=PIPE,
+    stderr=STDOUT
+  )
+  out, _ = p.communicate()
+  res += out
+
   res += "Removing stored fragment files...\n"
   p = Popen(
     "rm -vf *.off",
@@ -200,3 +212,4 @@ def mop_update():
 
   res += "Done.\n"
   return "<pre>\n" + res + "</pre>\n"
+
