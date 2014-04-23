@@ -11,9 +11,18 @@
 
     <hr />
 
+    <h3>Get repositories</h3>
+
+    <form action="{% url repos %}" method="post">
+      {% csrf_token %}
+      <input type="submit" />
+    </form>
+
+    <hr />
+
     <h3>Generate fragments</h3>
 
-    <form action="generate/" method="post">
+    <form action="{% url generate %}" method="post">
       {% csrf_token %}
       <textarea rows="10" cols="50" name="data" placeholder="JSON generation query"></textarea>
       <br />
@@ -24,7 +33,7 @@
 
     <h3>Retrieve fragments</h3>
 
-    <form action="load/" method="post">
+    <form action="{% load %}" method="post">
       {% csrf_token %}
       <textarea rows="10" cols="50" name="data" placeholder="JSON retrieval query"></textarea>
       <br />
