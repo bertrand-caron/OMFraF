@@ -4,9 +4,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from omfraf.main import settings
-from util import get_repositories, generate_fragments, load_fragments, \
-    mop_update
-
+from util import get_repositories, generate_fragments, load_fragments, mop_update
 
 def index(request):
   return render(request, 'index.html')
