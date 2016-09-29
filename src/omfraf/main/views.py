@@ -15,7 +15,7 @@ def repos(request):
   repos.update({'version': settings.VERSION})
   return HttpResponse(
     simplejson.dumps(repos, indent=2, default=(lambda o: o.__dict__)),
-    mimetype="application/json"
+    content_type="application/json"
   )
 
 @csrf_exempt
@@ -31,7 +31,7 @@ def generate(request):
   ack.update({'version': settings.VERSION})
   return HttpResponse(
     simplejson.dumps(ack, indent=2, default=(lambda o: o.__dict__)),
-    mimetype="application/json"
+    content_type="application/json"
   )
 
 @csrf_exempt
@@ -47,7 +47,7 @@ def load(request):
   fragments.update({'version': settings.VERSION})
   return HttpResponse(
     simplejson.dumps(fragments, indent=2, default=(lambda o: o.__dict__)),
-    mimetype="application/json"
+    content_type="application/json"
   )
 
 @never_cache
