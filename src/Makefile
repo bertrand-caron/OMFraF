@@ -1,3 +1,3 @@
 test_wsgi:
-	/home/atb/.local/python27/bin/uwsgi --socket :8001 --module omfraf.wsgi
+	/usr/local/python27/bin/uwsgi --ini omfraf_uwsgi.ini
 .PHONY: test_wsgi
