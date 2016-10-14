@@ -80,11 +80,11 @@ def generate_fragments(lgf, repo, shell, outfile, atom_ids):
   return {'off': outfile, 'missing_atoms': list(missing_atoms)}
 
 
-def generate_molecule_fragments(molid, molfile, shell, infile, debug=True):
+def generate_molecule_fragments(molid, molfile, shell, infile, debug=False):
   subprocess_args = "%s -s %s -atb_id %s %s %s" % (GENERATOR, shell, molid, infile, molfile)
 
   if debug:
-    with open(join(SAVEDIR, 'profile.sh'), 'w') as fh:
+    with open(join('/tmp', 'profile.sh'), 'w') as fh:
       fh.write(subprocess_args)
 
   p = Popen(
