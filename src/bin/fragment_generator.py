@@ -2,22 +2,23 @@
 from datetime import datetime
 from getopt import getopt, GetoptError
 import json
-import os
+from os import listdir
+from os.path import normpath, splitext, exists, split, join, dirname, abspath
 from subprocess import Popen, PIPE
 import sys
 from tempfile import NamedTemporaryFile
 
+def from_here(directory):
+    return join(abspath(dirname(__file__)), directory)
 
-SAVEDIR = "fragments/"
-GENERATOR = "mop/build/fragments"
-REPODIR = "mop/data/fragments/"
+SAVEDIR = from_here("fragments/")
+GENERATOR = from_here("mop/build/fragments")
+REPODIR = from_here("mop/data/fragments/")
 DEFAULT_REPO = "lipids"
 DEFAULT_SHELL_SIZE = 1
 
-
 class ValidationError(Exception):
   pass
-
 
 def molecule_to_lgf(molecule):
   lgf = ""
@@ -42,17 +43,17 @@ def bonds_to_lgf(bonds):
 
 
 def generate_fragments(lgf, repo, shell, outfile, atom_ids):
-  repo_path = os.path.normpath("%s/%s" % (REPODIR, repo))
+  repo_path = join(REPODIR, repo)
   molecules = []
   with NamedTemporaryFile() as fp:
     fp.write(lgf)
     fp.seek(0)
 
-    for file in os.listdir(repo_path):
-      name, ext = os.path.splitext(file)
-      if ext == ".lgf":
+    for a_file in listdir(repo_path):
+      file_name, file_extension = splitext(a_file)
+      if file_extension == ".lgf":
         mf = generate_molecule_fragments(
-          name, "%s/%s" % (repo_path, file), shell, fp.name
+          file_name, "%s/%s" % (repo_path, a_file), shell, fp.name
         )
         if len(mf["fragments"]) > 0:
           molecules.append(mf)
@@ -64,20 +65,30 @@ def generate_fragments(lgf, repo, shell, outfile, atom_ids):
         found_ids.add(pair["id1"])
 
   missing_atoms = set(atom_ids) - found_ids
-  res = json.dumps({
-    "molecules": molecules,
-    "missing_atoms": list(missing_atoms)
-  }, default=(lambda o: o.__dict__))
-  outpath = os.path.normpath("%s/%s" % (SAVEDIR, outfile))
+  res = json.dumps(
+    {
+      "molecules": molecules,
+      "missing_atoms": list(missing_atoms),
+    },
+    default=(lambda o: o.__dict__),
+  )
+  outpath = join(SAVEDIR, outfile)
+
   with open(outpath, "w") as fp:
     fp.write(res)
 
   return {'off': outfile, 'missing_atoms': list(missing_atoms)}
 
 
-def generate_molecule_fragments(molid, molfile, shell, infile):
+def generate_molecule_fragments(molid, molfile, shell, infile, debug=True):
+  subprocess_args = "%s -s %s -atb_id %s %s %s" % (GENERATOR, shell, molid, infile, molfile)
+
+  if debug:
+    with open(join(SAVEDIR, 'profile.sh'), 'w') as fh:
+      fh.write(subprocess_args)
+
   p = Popen(
-    "%s -s %s -atb_id %s %s %s" % (GENERATOR, shell, molid, infile, molfile),
+    subprocess_args,
     shell=True,
     stdout=PIPE,
     stderr=PIPE
@@ -98,7 +109,7 @@ def main(argv):
   shell = DEFAULT_SHELL_SIZE
 
   ffid = datetime.now().strftime("%Y%m%d%H%M%S%f")
-  while os.path.exists("%s/%s.off" % (SAVEDIR, ffid)):
+  while exists("%s/%s.off" % (SAVEDIR, ffid)):
     ffid = str(int(ffid) - 1)
   outfile = "%s.off" % ffid
 
@@ -113,9 +124,9 @@ def main(argv):
 
   for o, v in opts:
     if o in ("-r", "--repository"):
-      rp = os.path.normpath(v)
-      repo_path = os.path.normpath("%s/%s" % (REPODIR, rp))
-      if os.path.exists(repo_path):
+      rp = normpath(v)
+      repo_path = normpath("%s/%s" % (REPODIR, rp))
+      if exists(repo_path):
         repo = rp
       else:
         raise ValidationError("Provided repository (%s) does not exist" % rp)
@@ -127,9 +138,9 @@ def main(argv):
       except ValueError as e:
         raise ValidationError("Shell size needs to be an integer")
     elif o in ("-o", "--ofile"):
-      op = os.path.normpath("%s/%s" % (SAVEDIR, v))
-      dir, _ = os.path.split(op)
-      if os.path.exists(dir):
+      op = join(SAVEDIR, v)
+      directory, _ = split(op)
+      if exists(directory):
         outfile = v
       else:
         raise ValidationError("Output folder does not exist")
@@ -147,7 +158,6 @@ def main(argv):
 
   out = generate_fragments(lgf, repo, shell, outfile, atom_ids)
   print json.dumps(out, default=lambda o: o.__dict__)
-
 
 if __name__ == "__main__":
   try:
