@@ -8,6 +8,9 @@ from subprocess import Popen, PIPE
 import sys
 from tempfile import NamedTemporaryFile
 
+from multiprocessing import Pool
+from functools import partial
+
 def from_here(directory):
     return join(abspath(dirname(__file__)), directory)
 
@@ -41,22 +44,36 @@ def bonds_to_lgf(bonds):
     lgf += "%s\t%s\t%s\t\n" % (bond["a1"], bond["a2"], i)
   return lgf
 
+def fragments_for_lgf_file(file_name, repo_path, shell, fp_name):
+    return generate_molecule_fragments(
+      file_name,
+      join(repo_path, file_name + '.lgf'),
+      shell,
+      fp_name,
+    )
 
-def generate_fragments(lgf, repo, shell, outfile, atom_ids):
+def generate_fragments(lgf, repo, shell, outfile, atom_ids, num_threads=16):
+  pool = Pool(num_threads)
+
   repo_path = join(REPODIR, repo)
   molecules = []
   with NamedTemporaryFile() as fp:
     fp.write(lgf)
     fp.seek(0)
 
-    for a_file in listdir(repo_path):
-      file_name, file_extension = splitext(a_file)
-      if file_extension == ".lgf":
-        mf = generate_molecule_fragments(
-          file_name, "%s/%s" % (repo_path, a_file), shell, fp.name
-        )
-        if len(mf["fragments"]) > 0:
-          molecules.append(mf)
+    lgf_files = [
+      file_name
+      for (file_name, file_extension) in map(splitext, listdir(repo_path))
+      if file_extension == ".lgf"
+    ]
+
+    molecules = filter(
+      lambda molecule: len(molecule["fragments"]) > 0,
+      pool.map(
+        partial(fragments_for_lgf_file, repo_path=repo_path, shell=shell, fp_name=fp.name),
+        lgf_files,
+      ),
+  )
 
   found_ids = set()
   for molecule in molecules:
@@ -102,7 +119,6 @@ def generate_molecule_fragments(molid, molfile, shell, infile, debug=False):
     return json.loads(out)
   except ValueError as e:
     raise ValidationError("Generator returned invalid JSON: %s" % e)
-
 
 def main(argv):
   repo = DEFAULT_REPO
