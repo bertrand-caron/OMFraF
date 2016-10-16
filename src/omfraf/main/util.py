@@ -10,7 +10,7 @@ import re
 logger = logging.getLogger('omfraf')
 
 DEFAULTSHELL = 1
-DEFAULTREPO = "lipids"
+DEFAULTREPO = 'qm2'
 BINDIR = os.path.normpath("%s/../bin/" % os.path.dirname(omfraf.__file__))
 REPODIR = os.path.normpath("%s/mop/data/fragments/" % BINDIR)
 FRAGMENTSDIR = "%s/fragments" % BINDIR
@@ -30,14 +30,22 @@ class FinderError(Exception):
   pass
 
 
+def default_repo_first(repository_name):
+  '''NB: Remember that False < True, important for sorted().'''
+  return (not repository_name == DEFAULTREPO)
+
 def get_repositories():
   repos = []
   for _, dirs, _ in os.walk(REPODIR):
     repos = dirs
     break
 
-  return {'repos': repos}
-
+  return {
+    'repos': sorted(
+      repos,
+      key=default_repo_first,
+    ),
+  }
 
 def get_atb_outfile(molid, repo=None, shell=None):
   return "%s_%s_%s.off" % (repo or DEFAULTREPO, shell or DEFAULTSHELL, molid)
