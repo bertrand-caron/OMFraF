@@ -101,8 +101,10 @@ def generate_molecule_fragments(molid, molfile, shell, infile, debug=False):
   subprocess_args = "%s -s %s -atb_id %s %s %s" % (GENERATOR, shell, molid, infile, molfile)
 
   if debug:
+    from shutil import copyfile
     with open(join('/tmp', 'profile.sh'), 'w') as fh:
       fh.write(subprocess_args)
+    copyfile(infile, '/tmp/dump.lgf')
 
   p = Popen(
     subprocess_args,
