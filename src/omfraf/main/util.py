@@ -47,8 +47,8 @@ def get_repositories():
     ),
   }
 
-def get_atb_outfile(molid, repo=None, shell=None):
-  return "%s_%s_%s.off" % (repo or DEFAULTREPO, shell or DEFAULTSHELL, molid)
+def get_atb_outfile(molid, repo, shell):
+  return "%s_%s_%s.off" % (repo, shell, molid)
 
 def generate_fragments(args):
   try:
@@ -58,8 +58,8 @@ def generate_fragments(args):
 
   # This is safe now, as all have been validated
   data = args.get("data")
-  repo = args.get("repo", None)
-  shell_size = args.get("shell", None)
+  repo = args.get("repo", DEFAULTREPO)
+  shell_size = args.get("shell", DEFAULTSHELL)
 
   md = json.loads(data)["molecule"]
   if "molid" in md and md["molid"].isdigit():
@@ -88,10 +88,9 @@ def store_fragments(data, repo=None, shell_size=None):
     args = "-o %s" % get_atb_outfile(md["molid"], repo, shell_size)
   else:
     args = ""
-  if repo:
-    args += " -r %s" % repo
-  if shell_size:
-    args += " -s %s" % shell_size
+
+  args += " -r %s" % repo
+  args += " -s %s" % shell_size
 
   p = Popen(
     "%s %s \'%s\'" % (FRAGMENTGENERATOR, args, data),
